@@ -33,8 +33,8 @@
 <body>
 <div id="root"><div id="loading">웅장한 한자 수호대를 안전하게 동기화하는 중...</div></div>
 
-<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -88,17 +88,24 @@
   appId: "1:941945302949:web:593fbfa9b3c146ba06824c"
 };
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  let database = null;
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    database = firebase.database();
+  } catch (e) {
+    console.error("Firebase 초기화 실패:", e);
   }
-  const database = firebase.database();
 
   function App() {
     const [view, setView] = React.useState("main");
     const [userName, setUserName] = React.useState("수련생");
     const [progress, setProgress] = React.useState({});
+    const [dbError, setDbError] = React.useState(!database);
 
     React.useEffect(() => {
+      if (!database) return;
       const studentsRef = database.ref("students");
       studentsRef.on("value", (snapshot) => {
         const data = snapshot.val();
@@ -109,6 +116,9 @@
             setProgress(list[0].progress || {});
           }
         }
+      }, (err) => {
+        console.error("Firebase 읽기 오류:", err);
+        setDbError(true);
       });
       return () => studentsRef.off();
     }, []);
@@ -132,6 +142,16 @@
       { id: 2, name: "주작", title: "南方 수호신", color: "#ff7043", bg: "linear-gradient(135deg, #3a1717, #140404)" },
       { id: 3, name: "현무", title: "北方 수호신", color: "#78909c", bg: "linear-gradient(135deg, #1a242f, #070b10)" }
     ];
+
+    if (dbError) {
+      return (
+        <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", padding: "60px 20px", background: "linear-gradient(180deg, #231d16 0%, #0f0d0b 100%)", textAlign: "center" }}>
+          <div style={{ fontFamily: DISPLAY, fontSize: 28, color: "#f5e6d3", marginBottom: 16 }}>한자 수호대</div>
+          <div style={{ color: "#ff7043", fontSize: 14, marginBottom: 12 }}>⚠️ 데이터베이스 연결 실패</div>
+          <div style={{ color: "#8c7b69", fontSize: 12, lineHeight: 1.6 }}>Firebase 연결을 확인해 주세요.<br/>오프라인 상태이거나 설정에 문제가 있을 수 있습니다.</div>
+        </div>
+      );
+    }
 
     if (view === "main") {
       const totalMastered = Object.values(progress).filter(p => p.mastered).length;
