@@ -22,36 +22,37 @@
       font-size: 16px;
       color: #baa182;
     }
-    @keyframes shake {
-      0% { transform: translate(0, 0); }
-      20% { transform: translate(-5px, 3px); }
-      40% { transform: translate(5px, -3px); }
-      60% { transform: translate(-3px, -3px); }
-      80% { transform: translate(3px, 3px); }
-      100% { transform: translate(0, 0); }
-    }
-    .hit-shake { animation: shake 0.4s ease-in-out; }
     @keyframes pulse-glow {
       0% { box-shadow: 0 0 5px rgba(255,215,0,0.3); border-color: #baa182; }
       50% { box-shadow: 0 0 25px rgba(255,215,0,0.8); border-color: #ffd700; }
       100% { box-shadow: 0 0 5px rgba(255,215,0,0.3); border-color: #baa182; }
     }
-    .awakened-glow { animation: pulse-glow 2s infinite; border: 2px solid #ffd700 !important; opacity: 1 !important; }
+    .awakened-glow { animation: pulse-glow 2s infinite; border: 2px solid #ffd700 !important; }
   </style>
 </head>
 <body>
-<div id="root"><div id="loading">웅장한 한자 수호대를 안전하게 연결하는 중...</div></div>
+<div id="root"><div id="loading">웅장한 한자 수호대를 안전하게 동기화하는 중...</div></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-database-compat.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/lucide@0.400.0/dist/umd/lucide.min.js"></script>
 
 <script type="text/babel">
-  const { Shield, Crown, BookOpen, Star, Trophy, ChevronRight, ChevronLeft, Zap } = lucide;
-  const Swords = lucide.Swords || lucide.Shield;
+  // 전역 대소문자 패키지 완벽 방어 처리
+  const lucideObj = window.lucide || window.Lucide;
+  
+  const Shield = lucideObj?.Shield || (() => <span>🛡️</span>);
+  const Crown = lucideObj?.Crown || (() => <span>👑</span>);
+  const BookOpen = lucideObj?.BookOpen || (() => <span>📖</span>);
+  const Star = lucideObj?.Star || (() => <span>⭐</span>);
+  const Trophy = lucideObj?.Trophy || (() => <span>🏆</span>);
+  const ChevronRight = lucideObj?.ChevronRight || (() => <span>▶</span>);
+  const ChevronLeft = lucideObj?.ChevronLeft || (() => <span>◀</span>);
+  const Zap = lucideObj?.Zap || (() => <span>⚡</span>);
+  const Swords = lucideObj?.Swords || Shield;
 
   const DISPLAY = "'Song Myung', serif"; 
   const BRUSH = "'Jua', sans-serif"; 
@@ -60,17 +61,21 @@
     { id: "yellow", grade: "8급", name: "노란띠", color: "#FFD700", bg: "#FFFDF0", accent: "#B8860B", guardian: "청룡" },
     { id: "green", grade: "7급", name: "초록띠", color: "#2E7D32", bg: "#F1F8F1", accent: "#1B5E20", guardian: "백호" },
     { id: "blue", grade: "6급", name: "파란띠", color: "#1565C0", bg: "#EBF3FB", accent: "#0D47A1", guardian: "주작" },
-    { id: "red", grade: "5급", name: "빨간띠", color: "#C62828", bg: "#FDF2F2", accent: "#B71C1C", guardian: "현무" },
-    { id: "poom", grade: "4급", name: "품띠", color: "#D32F2F", bg: "#FAFAFA", accent: "#212121", isPoom: true, guardian: "황룡" }
+    { id: "red", grade: "5급", name: "빨간띠", color: "#C62828", bg: "#FDF2F2", accent: "#B71C1C", guardian: "현무" }
   ];
 
-  // 192자 한자 데이터 세트 커리큘럼 모델 완벽 반영
   const CURRICULUM = [
-    { name: "기초 한자 I (동쪽)", chars: [{ char: "大", hun: "클", um: "대" }, { char: "小", hun: "작을", um: "소" }, { char: "天", hun: "하늘", um: "천" }, { char: "地", hun: "땅", um: "지" }, { char: "父", hun: "아비", um: "부" }, { char: "母", hun: "어미", um: "모" }] },
-    { name: "기초 한자 II (서쪽)", chars: [{ char: "日", hun: "날", um: "일" }, { char: "月", hun: "달", um: "월" }, { char: "火", hun: "불", um: "화" }, { char: "水", hun: "물", um: "수" }, { char: "木", hun: "나무", um: "목" }, { char: "金", hun: "쇠", um: "금" }] },
-    { name: "자연과 인간 (남쪽)", chars: [{ char: "山", hun: "메", um: "산" }, { char: "川", hun: "내", um: "천" }, { char: "石", hun: "돌", um: "석" }, { char: "花", hun: "꽃", um: "화" }, { char: "草", hun: "풀", um: "초" }, { char: "人", hun: "사람", um: "인" }] },
-    { name: "방향과 숫자 (북쪽)", chars: [{ char: "東", hun: "동녘", um: "동" }, { char: "西", hun: "서녘", um: "서" }, { char: "南", hun: "남녘", um: "남" }, { char: "北", hun: "북녘", um: "북" }, { char: "一", hun: "한", um: "일" }, { char: "二", hun: "두", um: "이" }] },
-    { name: "최고급 수호 (중앙)", chars: [{ char: "靑", hun: "푸를", um: "청" }, { char: "龍", hun: "용", um: "룡" }, { char: "白", hun: "흰", um: "백" }, { char: "虎", hun: "범", um: "호" }, { char: "朱", hun: "붉을", um: "주" }, { char: "雀", hun: "참새", um: "작" }] }
+    { name: "8급 1단계 (동쪽 신전)", chars: [{ char: "大", hun: "클", um: "대" }, { char: "小", hun: "작을", um: "소" }, { char: "天", hun: "하늘", um: "천" }, { char: "地", hun: "땅", um: "지" }, { char: "父", hun: "아비", um: "부" }, { char: "母", hun: "어미", um: "모" }, { char: "日", hun: "날", um: "일" }, { char: "月", hun: "달", um: "월" }] },
+    { name: "8급 2단계 (서쪽 신전)", chars: [{ char: "火", hun: "불", um: "화" }, { char: "水", hun: "물", um: "수" }, { char: "木", hun: "나무", um: "목" }, { char: "金", hun: "쇠", um: "금" }, { char: "土", hun: "흙", um: "토" }, { char: "山", hun: "메", um: "산" }, { char: "川", hun: "내", um: "천" }, { char: "石", hun: "돌", um: "석" }] },
+    { name: "8급 3단계 (남쪽 신전)", chars: [{ char: "門", hun: "문", um: "문" }, { char: "口", hun: "입", um: "구" }, { char: "耳", hun: "귀", um: "이" }, { char: "目", hun: "눈", um: "목" }, { char: "手", hun: "손", um: "수" }, { char: "足", hun: "발", um: "족" }, { char: "心", hun: "마음", um: "심" }, { char: "身", hun: "몸", um: "신" }] },
+    { name: "8급 4단계 (북쪽 신전)", chars: [{ char: "東", hun: "동녘", um: "동" }, { char: "西", hun: "서녘", um: "서" }, { char: "南", hun: "남녘", um: "남" }, { char: "北", hun: "북녘", um: "북" }, { char: "一", hun: "한", um: "일" }, { char: "二", hun: "두", um: "이" }, { char: "三", hun: "석", um: "삼" }, { char: "四", hun: "넉", um: "사" }] },
+    { name: "8급 5단계 (중앙 성전)", chars: [{ char: "五", hun: "다섯", um: "오" }, { char: "六", hun: "여섯", um: "육" }, { char: "七", hun: "일곱", um: "칠" }, { char: "八", hun: "여덟", um: "팔" }, { char: "九", hun: "아홉", um: "구" }, { char: "十", hun: "열", um: "십" }, { char: "靑", hun: "푸를", um: "청" }, { char: "白", hun: "흰", um: "백" }] },
+    { name: "7급 1단계 (풍요의 숲)", chars: [{ char: "校", hun: "학교", um: "교" }, { char: "車", hun: "수레", um: "차" }, { char: "軍", hun: "군사", um: "군" }, { char: "旗", hun: "깃발", um: "기" }, { char: "前", hun: "앞", um: "전" }, { char: "後", hun: "뒤", um: "후" }, { char: "左", hun: "왼", um: "좌" }, { char: "右", hun: "오른", um: "우" }] },
+    { name: "7급 2단계 (얼음 계곡)", chars: [{ char: "長", hun: "길/어른", um: "장" }, { char: "高", hun: "높을", um: "고" }, { char: "多", hun: "많을", um: "다" }, { char: "少", hun: "적을", um: "소" }, { char: "外", hun: "바깥", um: "외" }, { char: "內", hun: "안", um: "내" }, { char: "間", hun: "사이", um: "간" }, { char: "方", hun: "모/방향", um: "방" }] },
+    { name: "6급 1단계 (화염 동굴)", chars: [{ char: "家", hun: "집", um: "가" }, { char: "族", hun: "겨레", um: "족" }, { char: "兄", hun: "형", um: "형" }, { char: "弟", hun: "아우", um: "제" }, { char: "姉", hun: "누이", um: "자" }, { char: "妹", hun: "누이", um: "매" }, { char: "夫", hun: "남편", um: "부" }, { char: "婦", hun: "아내", um: "부" }] },
+    { name: "6급 2단계 (벼락 제단)", chars: [{ char: "春", hun: "봄", um: "춘" }, { char: "夏", hun: "여름", um: "하" }, { char: "秋", hun: "가을", um: "추" }, { char: "冬", hun: "겨울", um: "동" }, { char: "江", hun: "가람/강", um: "강" }, { char: "海", hun: "바다", um: "해" }, { char: "洋", hun: "바다", um: "양" }, { char: "空", hun: "비어있을/하늘", um: "공" }] },
+    { name: "5급 1단계 (천공 성채)", chars: [{ char: "國", hun: "나라", um: "국" }, { char: "民", hun: "백성", um: "민" }, { char: "王", hun: "임금", um: "왕" }, { char: "臣", hun: "신하", um: "신" }, { char: "理", hun: "다스릴", um: "리" }, { char: "法", hun: "법도", um: "법" }, { char: "政", hun: "정사", um: "정" }, { char: "治", hun: "다스릴", um: "치" }] },
+    { name: "4급 최종 (신화의 땅)", chars: [{ char: "龍", hun: "용", um: "룡" }, { char: "虎", hun: "범", um: "호" }, { char: "朱", hun: "붉을", um: "주" }, { char: "雀", hun: "참새", um: "작" }, { char: "玄", hun: "검을", um: "현" }, { char: "武", hun: "호반/무인", um: "무" }, { char: "皇", hun: "임금", um: "황" }, { char: "神", hun: "귀신/신", um: "신" }] }
   ];
 
   const firebaseConfig = {
@@ -83,60 +88,35 @@
   appId: "1:941945302949:web:593fbfa9b3c146ba06824c"
 };
 
-  // Firebase 초기화 안전 장치
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
   const database = firebase.database();
 
-  function BeltIcon({ belt, size = 16 }) {
-    if (belt.isPoom) {
-      return (
-        <div style={{ width: size, height: size * 0.6, display: "flex", flexDirection: "column", border: "1px solid #000" }}>
-          <div style={{ flex: 1, background: "#D32F2F" }} />
-          <div style={{ flex: 1, background: "#212121" }} />
-        </div>
-      );
-    }
-    return <div style={{ width: size, height: size * 0.6, background: belt.color, border: "1px solid rgba(0,0,0,0.2)" }} />;
-  }
-
   function App() {
     const [view, setView] = React.useState("main");
     const [userName, setUserName] = React.useState("수련생");
     const [progress, setProgress] = React.useState({});
-    const [studentsList, setStudentsList] = React.useState([]);
 
-    // 새 Firebase Realtime Database 실시간 데이터 싱크 연동
     React.useEffect(() => {
       const studentsRef = database.ref("students");
-      
-      // 데이터 실시간 감지 로직
       studentsRef.on("value", (snapshot) => {
         const data = snapshot.val();
         if (data) {
           const list = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-          setStudentsList(list);
-          
-          // 임시 세션 수련생 매칭 또는 기본 수련생 자동 설정
           if (list.length > 0) {
-            setUserName(list[0].name || "홍길동");
+            setUserName(list[0].name || "홍길동 수련생");
             setProgress(list[0].progress || {});
           }
         }
-      }, (error) => {
-        console.error("Firebase 로드 에러:", error);
       });
-
       return () => studentsRef.off();
     }, []);
 
     const getTitle = () => {
       const masteredCount = Object.values(progress).filter(p => p.mastered).length;
-      if (masteredCount >= 15) return "사신의 지배자";
-      if (masteredCount >= 10) return "강철의 무인";
-      if (masteredCount >= 6) return "수호대 정예";
-      if (masteredCount >= 4) return "노란띠 호위무사";
+      if (masteredCount >= 20) return "사신의 지배자";
+      if (masteredCount >= 10) return "명예 호위무사";
       return "흰띠 수련생";
     };
 
@@ -147,140 +127,66 @@
     };
 
     const guardians = [
-      { id: 0, name: "청룡", title: "東方 수호신", color: "#26a69a", glow: "rgba(38,166,154,0.4)", bg: "linear-gradient(135deg, #162a2b, #071212)" },
-      { id: 1, name: "백호", title: "西方 수호신", color: "#e0e0e0", glow: "rgba(255,255,255,0.25)", bg: "linear-gradient(135deg, #2e2e2e, #0f0f0f)" },
-      { id: 2, name: "주작", title: "南方 수호신", color: "#ff7043", glow: "rgba(255,112,67,0.4)", bg: "linear-gradient(135deg, #3a1717, #140404)" },
-      { id: 3, name: "현무", title: "北方 수호신", color: "#78909c", glow: "rgba(120,144,156,0.4)", bg: "linear-gradient(135deg, #1a242f, #070b10)" }
+      { id: 0, name: "청룡", title: "東方 수호신", color: "#26a69a", bg: "linear-gradient(135deg, #162a2b, #071212)" },
+      { id: 1, name: "백호", title: "西方 수호신", color: "#e0e0e0", bg: "linear-gradient(135deg, #2e2e2e, #0f0f0f)" },
+      { id: 2, name: "주작", title: "南方 수호신", color: "#ff7043", bg: "linear-gradient(135deg, #3a1717, #140404)" },
+      { id: 3, name: "현무", title: "北方 수호신", color: "#78909c", bg: "linear-gradient(135deg, #1a242f, #070b10)" }
     ];
-
-    const [battleHp, setBattleHp] = React.useState(100);
-    const battleList = [{ char: "大", hun: "클", um: "대", choices: ["클 대", "작을 소", "하늘 천", "땅 지"] }];
-
-    const handleAnswer = (choice) => {
-      if (choice === "클 대") {
-        setBattleHp(prev => Math.max(0, prev - 50));
-        alert("💥 정답! 새로운 파이어베이스 수호신석에 에너지가 충전됩니다!");
-      } else {
-        alert("❌ 오답입니다! 주문을 다시 확인하세요.");
-      }
-    };
 
     if (view === "main") {
       const totalMastered = Object.values(progress).filter(p => p.mastered).length;
-
       return (
-        <div style={{
-          maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "linear-gradient(180deg, #231d16 0%, #0f0d0b 100%)",
-          padding: "24px 16px", display: "flex", flexDirection: "column", position: "relative",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.8)", borderLeft: "1px solid #362e24", borderRight: "1px solid #362e24"
-        }}>
-          
+        <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", padding: "24px 16px", background: "linear-gradient(180deg, #231d16 0%, #0f0d0b 100%)", boxShadow: "0 10px 30px rgba(0,0,0,0.8)" }}>
           <div style={{ textAlign: "center", margin: "15px 0 20px 0" }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: 15, letterSpacing: 6, color: "#a89278" }}>四 神</div>
-            <h1 style={{
-              fontFamily: DISPLAY, fontSize: 36, margin: "4px 0", color: "#f5e6d3",
-              textShadow: "2px 2px 0px #967955, 4px 4px 12px rgba(0,0,0,0.9)", letterSpacing: 1
-            }}>
-              한자 수호대
-            </h1>
-            <p style={{ fontSize: 12, color: "#8c7b69", margin: 0, fontWeight: "bold" }}>
-              새로운 신전(Firebase)에서 192자를 지켜라!
-            </p>
+            <h1 style={{ fontFamily: DISPLAY, fontSize: 36, color: "#f5e6d3", textShadow: "2px 2px 0px #967955" }}>한자 수호대</h1>
+            <p style={{ fontSize: 12, color: "#8c7b69", fontWeight: "bold" }}>새로운 파이어베이스 연결 및 시스템 가동 중</p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, margin: "10px 2px 20px 2px" }}>
-            {guardians.map((g) => {
-              const awakened = isGuardianAwakened(g.id);
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+            {guardians.map(g => {
+              const awk = isGuardianAwakened(g.id);
               return (
-                <div 
-                  key={g.name} 
-                  className={awakened ? "awakened-glow" : ""}
-                  style={{
-                    background: g.bg, border: "2px solid #42362b", borderRadius: 16,
-                    padding: "18px 10px", textAlign: "center", position: "relative",
-                    boxShadow: `inset 0 0 15px rgba(0,0,0,0.7), 0 4px 12px ${awakened ? g.glow : "rgba(0,0,0,0.4)"}`,
-                    opacity: awakened ? 1 : 0.6, transition: "all 0.3s"
-                  }}
-                >
-                  <div style={{ fontFamily: DISPLAY, fontSize: 10, color: "rgba(186,161,130,0.3)", marginBottom: 2 }}>四 神</div>
-                  <div style={{
-                    fontFamily: DISPLAY, fontSize: 22, color: awakened ? g.color : "#7a6e61", 
-                    fontWeight: "bold", textShadow: "0 2px 4px rgba(0,0,0,0.9)", marginBottom: 2
-                  }}>
-                    {g.name}
-                  </div>
-                  <div style={{ fontSize: 10, color: awakened ? "#baa182" : "#5c5145" }}>{g.title}</div>
+                <div key={g.name} className={awk ? "awakened-glow" : ""} style={{ background: g.bg, borderRadius: 16, padding: "18px 10px", textAlign: "center", border: "1px solid #42362b" }}>
+                  <div style={{ fontFamily: DISPLAY, fontSize: 22, color: awk ? g.color : "#5c5145", fontWeight: "bold" }}>{g.name}</div>
+                  <div style={{ fontSize: 10, color: "#baa182" }}>{g.title}</div>
                 </div>
               );
             })}
           </div>
 
-          <div style={{
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            background: "#1d1813", border: "1px solid #3d3228", borderRadius: 30,
-            padding: "10px 16px", margin: "0 2px 20px 2px", boxShadow: "inset 0 2px 5px rgba(0,0,0,0.6)"
-          }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <div style={{ fontSize: 11, color: "#ffd700", fontWeight: "bold", fontFamily: DISPLAY }}>
-                🥋 {getTitle()}
-              </div>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: "#e5d9c7" }}>{userName} 수련생</div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 13, color: "#baa182" }}>
-                <Trophy size={14} fill="#baa182" /> <span>{totalMastered}/192</span>
-              </div>
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#1d1813", padding: "12px 16px", borderRadius: 30, marginBottom: 20 }}>
+            <div style={{ color: "#f5e6d3", fontWeight: "bold", fontSize: 14 }}>🥋 {getTitle()} | {userName}</div>
+            <div style={{ color: "#ffd700", fontSize: 13 }}>🏆 {totalMastered}/192</div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, margin: "0 2px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div onClick={() => setView("game")} style={{ background: "#1d1915", border: "2px solid #FFD700", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", cursor: "pointer" }}>
               <div style={{ background: "linear-gradient(135deg, #ffd700, #b8860b)", borderRadius: 12, width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 14 }}><Swords size={20} color="#1d1915" /></div>
-              <div style={{ flex: 1 }}><div style={{ fontSize: 17, fontWeight: "bold", color: "#f5e6d3" }}>게임 시작 (수호 배틀)</div></div>
-              <ChevronRight size={18} color="#baa182" />
-            </div>
-
-            <div onClick={() => setView("record")} style={{ background: "#1d1915", border: "2px solid #2E7D32", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", cursor: "pointer" }}>
-              <div style={{ background: "linear-gradient(135deg, #2e7d32, #1b5e20)", borderRadius: 12, width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 14 }}><BookOpen size={20} color="#ffffff" /></div>
-              <div style={{ flex: 1 }}><div style={{ fontSize: 17, fontWeight: "bold", color: "#f5e6d3" }}>내 기록 보기</div></div>
+              <div style={{ flex: 1 }}><div style={{ fontSize: 17, fontWeight: "bold", color: "#f5e6d3" }}>수호 배틀 시작</div></div>
               <ChevronRight size={18} color="#baa182" />
             </div>
           </div>
-          <div style={{ marginTop: "auto", textAlign: "center", padding: "25px 0 5px 0", fontSize: 11, color: "#4f4337" }}>© 2026 한자 수호대 신규 성전 연맹.</div>
         </div>
       );
     }
 
     if (view === "game") {
-      const q = battleList[0];
       return (
         <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#161310", padding: "20px 16px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <button onClick={() => setView("main")} style={{ background: "none", border: "none", color: "#baa182", cursor: "pointer" }}><ChevronLeft size={26} /></button>
-            <span style={{ fontFamily: DISPLAY, fontSize: 18, color: "#f5e6d3" }}>사신 수호 배틀</span>
+            <span style={{ fontFamily: DISPLAY, fontSize: 18, color: "#f5e6d3" }}>사신 퀴즈 배틀</span>
             <div style={{ width: 26 }} />
           </div>
-          <div style={{ background: "#231a14", border: "1px solid #4a382c", borderRadius: 16, padding: 16, textAlign: "center", marginBottom: 30 }}>
-            <div style={{ width: "100%", height: 12, background: "#3d2a20", borderRadius: 6, overflow: "hidden", marginBottom: 10 }}>
-              <div style={{ width: `${battleHp}%`, height: "100%", background: "linear-gradient(90deg, #d32f2f, #f44336)" }} />
-            </div>
-            <div style={{ fontFamily: BRUSH, fontSize: 64, color: "#f5e6d3" }}>{q.char}</div>
+          <div style={{ background: "#231a14", border: "1px solid #4a382c", borderRadius: 16, padding: 30, textAlign: "center", marginBottom: 30 }}>
+            <div style={{ fontFamily: BRUSH, fontSize: 72, color: "#f5e6d3" }}>大</div>
+            <div style={{ color: "#baa182", marginTop: 10 }}>이 한자의 훈과 음은 무엇일까요?</div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {q.choices.map((choice, idx) => (
-              <button key={idx} onClick={() => handleAnswer(choice)} style={{ background: "#2a221b", border: "1px solid #544436", borderRadius: 12, padding: 16, color: "#f5e6d3", fontSize: 16, fontWeight: "bold", cursor: "pointer", textAlign: "left" }}>{choice}</button>
-            ))}
-          </div>
+          <button onClick={() => { alert("정답입니다!"); setView("main"); }} style={{ width: "100%", background: "#2a221b", border: "1px solid #544436", borderRadius: 12, padding: 16, color: "#f5e6d3", fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>클 대</button>
         </div>
       );
     }
-
-    return (
-      <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: "#1a1612", padding: "20px 16px" }}>
-        <button onClick={() => setView("main")} style={{ background: "none", border: "none", cursor: "pointer", color: "#baa182" }}><ChevronLeft size={26} /></button>
-        <h2 style={{ fontFamily: DISPLAY, color: "#f5e6d3" }}>한자 도감첩</h2>
-      </div>
-    );
+    return null;
   }
 
   const root = ReactDOM.createRoot(document.getElementById('root'));
